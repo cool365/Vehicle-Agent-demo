@@ -1,8 +1,8 @@
 {
-  "name": "safedrive-ai-guardian",
+  "name": "cockpit-context-aware-decision-system",
   "private": true,
   "version": "1.0.0",
-  "description": "Context-aware AI decision system for new energy vehicle cockpit - 智驾卫士：新一代情境感知智能座舱系统",
+  "description": "Context-Aware Decision System for Smart Cockpit - 智能座舱情境感知决策系统（座舱部门技术演示）",
   "type": "module",
   "scripts": {
     "dev": "vite",
