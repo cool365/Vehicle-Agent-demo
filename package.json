@@ -1,7 +1,8 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "safedrive-ai-guardian",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Context-aware AI decision system for new energy vehicle cockpit - 智驾卫士：新一代情境感知智能座舱系统",
   "type": "module",
   "scripts": {
     "dev": "vite",
