@@ -268,10 +268,10 @@ function App() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">
-                {language === 'zh' ? '新能源智能座舱系统' : 'Smart Cockpit System'}
+                {language === 'zh' ? '智能座舱情境感知决策系统' : 'Context-Aware Decision System'}
               </h1>
               <p className="text-xs text-slate-400">
-                {language === 'zh' ? 'AI驾驶助手 · 安全守护' : 'AI Driving Assistant · Safety Guardian'}
+                {language === 'zh' ? '座舱部门技术演示 v1.0' : 'Cockpit Dept Tech Demo v1.0'}
               </p>
             </div>
           </div>
