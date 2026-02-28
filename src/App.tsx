@@ -5,6 +5,7 @@ import { UserInputPanel } from './components/UserInputPanel';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { DynamicContentOverlay } from './components/DynamicContentOverlay';
 import { LanguageToggle } from './components/LanguageToggle';
+import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { Car } from 'lucide-react';
 import { VehicleState, PerformanceMetrics } from './types';
 import { Language, getTranslations } from './i18n';
@@ -234,6 +235,64 @@ function App() {
     }
   };
 
+  const handleTriggerScenario = async (scenarioType: string) => {
+    if (!supabaseUrl) return;
+
+    const scenarioStates: Record<string, Partial<VehicleState>> = {
+      'low-battery': {
+        battery_percentage: 15,
+        location: language === 'zh' ? '市区拥堵路段' : 'Urban Traffic',
+        speed: 25,
+        safety_level: 2,
+      },
+      'high-temp': {
+        cabin_temp: 32,
+        weather: language === 'zh' ? '晴天高温' : 'Hot Sunny',
+        speed: 60,
+      },
+      'arrived': {
+        location: language === 'zh' ? '商业区 - 购物中心' : 'Shopping Mall',
+        speed: 0,
+        gear: 'P',
+        distraction_level: 0,
+      },
+      'fatigue': {
+        distraction_level: 4,
+        speed: 80,
+        safety_level: 2,
+      },
+      'bad-weather': {
+        weather: language === 'zh' ? '大雨' : 'Heavy Rain',
+        speed: 45,
+        safety_level: 1,
+      },
+      'emergency': {
+        speed: 30,
+        safety_level: 1,
+        distraction_level: 5,
+      },
+    };
+
+    const scenarioData = scenarioStates[scenarioType];
+    if (!scenarioData || !vehicleState) return;
+
+    setVehicleState({
+      ...vehicleState,
+      ...scenarioData,
+    });
+
+    const scenarioMessages: Record<string, string> = {
+      'low-battery': language === 'zh' ? '检测到低电量情况' : 'Low battery detected',
+      'high-temp': language === 'zh' ? '检测到车内高温' : 'High cabin temperature detected',
+      'arrived': language === 'zh' ? '已到达目的地' : 'Arrived at destination',
+      'fatigue': language === 'zh' ? '检测到疲劳驾驶' : 'Fatigue driving detected',
+      'bad-weather': language === 'zh' ? '检测到恶劣天气' : 'Bad weather detected',
+      'emergency': language === 'zh' ? '检测到紧急情况' : 'Emergency situation detected',
+    };
+
+    await handleSendCommand(scenarioMessages[scenarioType] || scenarioType);
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       setMetrics(prev => ({
@@ -293,6 +352,7 @@ function App() {
 
           <div className="space-y-4">
             <VehicleStatusPanel vehicleState={vehicleState} language={language} />
+            <ScenarioSimulator onTriggerScenario={handleTriggerScenario} language={language} />
             <PerformanceMonitor metrics={metrics} language={language} />
           </div>
         </div>
