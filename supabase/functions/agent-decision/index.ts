@@ -39,24 +39,15 @@ function generateAgentDecision(input: string, gear: string, distractionLevel: nu
   const isEmotionalInput = inputLower.includes('无聊') || inputLower.includes('累') ||
                           inputLower.includes('困') || inputLower.includes('放松');
 
-  // 1. 分心状态 - 最高优先级安全检查
-  if (distractionLevel > 0) {
-    // 导航和信息查询在分心状态下仍允许（驾驶必需）
-    if (isNavigation || isInfoQuery) {
-      return {
-        response: "⚠️ 检测到分心状态！" + (isNavigation ? "导航系统已切换为语音模式，" : "信息已通过语音播报，") + "请专注驾驶。",
-        reasoning: `分析驾驶员注意力：分心等级${distractionLevel}%，存在安全风险。${isNavigation ? '导航' : '信息查询'}属于驾驶必需功能，允许使用但切换为纯语音模式，减少视觉干扰。`,
-        action_taken: "强制语音模式 | AR透明度降至0.3 | 触发专注提醒",
-        risk_assessment: "中等风险：驾驶员分心，仅允许必需功能",
-        allowed: true
-      };
-    }
+  // 1. 停车/空档状态 - 最高优先级：车辆静止，所有功能开放
+  if (gear === 'P' || gear === 'N') {
+    const normalResponse = processNormalRequest(inputLower);
     return {
-      response: "⚠️ 检测到分心状态！请立即专注驾驶，非紧急任务已推迟。",
-      reasoning: `AI安全判断：检测到驾驶员注意力不集中（分心等级${distractionLevel}%），为保障行车安全，系统拒绝非必要功能请求。`,
-      action_taken: "请求被拦截 | AR透明度锁定0.3 | 触发警报",
-      risk_assessment: "高风险：驾驶员分心且请求非必要功能",
-      allowed: false
+      response: "✓ 车辆已停稳，" + normalResponse.response,
+      reasoning: `环境分析：车辆处于${gear === 'P' ? '停车' : '空档'}状态，速度为0，所有功能均可安全使用。即使驾驶员分心也不影响安全。`,
+      action_taken: normalResponse.action,
+      risk_assessment: "无风险：车辆静止，环境安全",
+      allowed: true
     };
   }
 
@@ -80,15 +71,24 @@ function generateAgentDecision(input: string, gear: string, distractionLevel: nu
     };
   }
 
-  // 3. 停车/空档状态 - 所有功能开放
-  if (gear === 'P' || gear === 'N') {
-    const normalResponse = processNormalRequest(inputLower);
+  // 3. 分心状态 - 仅在驾驶中检查（D档且速度>0）
+  if (distractionLevel > 0 && gear === 'D' && speed > 0) {
+    // 导航和信息查询在分心状态下仍允许（驾驶必需）
+    if (isNavigation || isInfoQuery) {
+      return {
+        response: "⚠️ 检测到分心状态！" + (isNavigation ? "导航系统已切换为语音模式，" : "信息已通过语音播报，") + "请专注驾驶。",
+        reasoning: `分析驾驶员注意力：分心等级${distractionLevel}%，存在安全风险。${isNavigation ? '导航' : '信息查询'}属于驾驶必需功能，允许使用但切换为纯语音模式，减少视觉干扰。`,
+        action_taken: "强制语音模式 | AR透明度降至0.3 | 触发专注提醒",
+        risk_assessment: "中等风险：驾驶员分心，仅允许必需功能",
+        allowed: true
+      };
+    }
     return {
-      response: "✓ 车辆已停稳，" + normalResponse.response,
-      reasoning: `环境分析：车辆处于${gear === 'P' ? '停车' : '空档'}状态，速度为0，所有功能均可安全使用。`,
-      action_taken: normalResponse.action,
-      risk_assessment: "无风险：车辆静止，环境安全",
-      allowed: true
+      response: "⚠️ 检测到分心状态！请立即专注驾驶，非紧急任务已推迟。",
+      reasoning: `AI安全判断：检测到驾驶员注意力不集中（分心等级${distractionLevel}%），为保障行车安全，系统拒绝非必要功能请求。`,
+      action_taken: "请求被拦截 | AR透明度锁定0.3 | 触发警报",
+      risk_assessment: "高风险：驾驶员分心且请求非必要功能",
+      allowed: false
     };
   }
 

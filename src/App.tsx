@@ -261,7 +261,7 @@ function App() {
         speed: 60,
         gear: 'D',
         safety_level: 3,
-        distraction_level: 1,
+        distraction_level: 0,
         battery_percentage: 75,
       },
       'arrived': {
@@ -289,7 +289,7 @@ function App() {
         speed: 45,
         safety_level: 1,
         gear: 'D',
-        distraction_level: 2,
+        distraction_level: 0,
         battery_percentage: 65,
         location: language === 'zh' ? '市区道路' : 'City Road',
         cabin_temp: 22,
@@ -297,7 +297,7 @@ function App() {
       'emergency': {
         speed: 30,
         safety_level: 1,
-        distraction_level: 5,
+        distraction_level: 0,
         gear: 'D',
         battery_percentage: 40,
         location: language === 'zh' ? '紧急制动路段' : 'Emergency Brake Zone',
