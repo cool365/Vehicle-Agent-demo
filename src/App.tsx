@@ -235,8 +235,8 @@ function App() {
     }
   };
 
-  const handleTriggerScenario = async (scenarioType: string) => {
-    if (!supabaseUrl) return;
+  const handleTriggerScenario = (scenarioType: string) => {
+    if (!vehicleState) return;
 
     const scenarioStates: Record<string, Partial<VehicleState>> = {
       'low-battery': {
@@ -244,53 +244,69 @@ function App() {
         location: language === 'zh' ? '市区拥堵路段' : 'Urban Traffic',
         speed: 25,
         safety_level: 2,
+        gear: 'D',
+        distraction_level: 2,
+        weather: language === 'zh' ? '晴天' : 'Sunny',
+        cabin_temp: 24,
       },
       'high-temp': {
         cabin_temp: 32,
         weather: language === 'zh' ? '晴天高温' : 'Hot Sunny',
         speed: 60,
+        gear: 'D',
+        safety_level: 3,
+        distraction_level: 1,
+        battery_percentage: 75,
       },
       'arrived': {
         location: language === 'zh' ? '商业区 - 购物中心' : 'Shopping Mall',
         speed: 0,
         gear: 'P',
         distraction_level: 0,
+        safety_level: 5,
+        battery_percentage: 60,
+        cabin_temp: 24,
+        weather: language === 'zh' ? '晴天' : 'Sunny',
       },
       'fatigue': {
         distraction_level: 4,
         speed: 80,
         safety_level: 2,
+        gear: 'D',
+        battery_percentage: 50,
+        location: language === 'zh' ? '高速公路' : 'Highway',
+        weather: language === 'zh' ? '晴天' : 'Sunny',
+        cabin_temp: 24,
       },
       'bad-weather': {
         weather: language === 'zh' ? '大雨' : 'Heavy Rain',
         speed: 45,
         safety_level: 1,
+        gear: 'D',
+        distraction_level: 2,
+        battery_percentage: 65,
+        location: language === 'zh' ? '市区道路' : 'City Road',
+        cabin_temp: 22,
       },
       'emergency': {
         speed: 30,
         safety_level: 1,
         distraction_level: 5,
+        gear: 'D',
+        battery_percentage: 40,
+        location: language === 'zh' ? '紧急制动路段' : 'Emergency Brake Zone',
+        weather: language === 'zh' ? '晴天' : 'Sunny',
+        cabin_temp: 24,
       },
     };
 
     const scenarioData = scenarioStates[scenarioType];
-    if (!scenarioData || !vehicleState) return;
+    if (!scenarioData) return;
 
     setVehicleState({
       ...vehicleState,
       ...scenarioData,
     });
-
-    const scenarioMessages: Record<string, string> = {
-      'low-battery': language === 'zh' ? '检测到低电量情况' : 'Low battery detected',
-      'high-temp': language === 'zh' ? '检测到车内高温' : 'High cabin temperature detected',
-      'arrived': language === 'zh' ? '已到达目的地' : 'Arrived at destination',
-      'fatigue': language === 'zh' ? '检测到疲劳驾驶' : 'Fatigue driving detected',
-      'bad-weather': language === 'zh' ? '检测到恶劣天气' : 'Bad weather detected',
-      'emergency': language === 'zh' ? '检测到紧急情况' : 'Emergency situation detected',
-    };
-
-    await handleSendCommand(scenarioMessages[scenarioType] || scenarioType);
   };
 
   useEffect(() => {
@@ -348,11 +364,11 @@ function App() {
               isProcessing={isProcessing}
               language={language}
             />
+            <ScenarioSimulator onTriggerScenario={handleTriggerScenario} language={language} />
           </div>
 
           <div className="space-y-4">
             <VehicleStatusPanel vehicleState={vehicleState} language={language} />
-            <ScenarioSimulator onTriggerScenario={handleTriggerScenario} language={language} />
             <PerformanceMonitor metrics={metrics} language={language} />
           </div>
         </div>
