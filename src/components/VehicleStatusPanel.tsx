@@ -235,7 +235,7 @@ export function VehicleStatusPanel({ vehicleState, language }: VehicleStatusPane
               </div>
             )}
 
-            {vehicleState.front_distance_m !== undefined && (
+            {vehicleState.front_distance_m !== undefined && vehicleState.front_distance_m !== null && (
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">
                   {language === 'zh' ? '前车距离' : 'Front Dist'}
@@ -246,7 +246,7 @@ export function VehicleStatusPanel({ vehicleState, language }: VehicleStatusPane
               </div>
             )}
 
-            {vehicleState.rear_distance_m !== undefined && (
+            {vehicleState.rear_distance_m !== undefined && vehicleState.rear_distance_m !== null && (
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">
                   {language === 'zh' ? '后方距离' : 'Rear Dist'}
