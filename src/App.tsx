@@ -6,6 +6,7 @@ import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { DynamicContentOverlay } from './components/DynamicContentOverlay';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
+import { DecisionModal } from './components/DecisionModal';
 import { Car } from 'lucide-react';
 import { VehicleState, PerformanceMetrics } from './types';
 import { Language, getTranslations } from './i18n';
@@ -33,6 +34,14 @@ function App() {
     totalRequests: 0,
     lastUpdateTime: 0,
     apiLatency: 0,
+  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalDecision, setModalDecision] = useState<AgentDecision>({
+    response: '',
+    reasoning: '',
+    action_taken: '',
+    risk_assessment: '',
+    allowed: true,
   });
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -109,6 +118,7 @@ function App() {
     if (!vehicleState || !supabaseUrl) return;
 
     setIsProcessing(true);
+    setIsModalOpen(true);
     const startTime = Date.now();
 
     // Detect feature type from command - Enhanced with comprehensive keyword matching
@@ -192,6 +202,7 @@ function App() {
         };
 
         setAgentResponse(agentDecision);
+        setModalDecision(agentDecision);
         setIsFeatureAllowed(agentDecision.allowed);
         setLastCommandVehicleStateId(vehicleState.id);
         setStateUpdatesSinceCommand(0); // Reset counter on new command
@@ -221,26 +232,30 @@ function App() {
         console.error('Error details:', errorText);
 
         // 提供友好的错误响应
-        setAgentResponse({
+        const errorDecision = {
           response: '抱歉，AI助手暂时无法处理您的请求。请稍后重试。',
           reasoning: '服务器响应异常，可能是网络问题或服务暂时不可用',
           action_taken: '请求失败，未执行任何操作',
           risk_assessment: '无风险：操作未执行',
           allowed: false,
-        });
+        };
+        setAgentResponse(errorDecision);
+        setModalDecision(errorDecision);
         setActiveFeature(null);
       }
     } catch (error) {
       console.error('Failed to get agent response:', error);
 
       // 提供友好的错误响应
-      setAgentResponse({
+      const errorDecision = {
         response: '抱歉，AI助手连接失败。请检查网络连接后重试。',
         reasoning: '网络连接异常或服务不可达',
         action_taken: '请求失败，未执行任何操作',
         risk_assessment: '无风险：操作未执行',
         allowed: false,
-      });
+      };
+      setAgentResponse(errorDecision);
+      setModalDecision(errorDecision);
       setActiveFeature(null);
     } finally {
       setIsProcessing(false);
@@ -251,38 +266,41 @@ function App() {
     if (!vehicleState || !supabaseUrl) return;
 
     const scenarioStates: Record<string, Partial<VehicleState>> = {
-      'low-battery': {
-        battery_percentage: 15,
+      'morning-commute': {
+        speed: 20,
+        gear: 'D',
+        battery_percentage: 85,
         location: language === 'zh' ? '市区拥堵路段' : 'Urban Traffic',
-        speed: 25,
         safety_level: 2,
-        gear: 'D',
-        distraction_level: 2,
+        distraction_level: 1,
         weather: language === 'zh' ? '晴天' : 'Sunny',
-        cabin_temp: 24,
+        cabin_temp: 22,
+        fatigue_level: 0,
       },
-      'high-temp': {
-        cabin_temp: 32,
-        weather: language === 'zh' ? '晴天高温' : 'Hot Sunny',
-        speed: 60,
-        gear: 'D',
-        safety_level: 3,
-        distraction_level: 0,
-        battery_percentage: 75,
-      },
-      'arrived': {
-        location: language === 'zh' ? '商业区 - 购物中心' : 'Shopping Mall',
+      'winter-cold-start': {
+        cabin_temp: 5,
+        weather: language === 'zh' ? '晴天严寒' : 'Cold',
         speed: 0,
         gear: 'P',
-        distraction_level: 0,
         safety_level: 5,
-        battery_percentage: 60,
-        cabin_temp: 24,
-        weather: language === 'zh' ? '晴天' : 'Sunny',
+        distraction_level: 0,
+        battery_percentage: 75,
+        fatigue_level: 0,
       },
-      'fatigue': {
+      'summer-hot-cabin': {
+        cabin_temp: 38,
+        weather: language === 'zh' ? '晴天高温' : 'Hot Sunny',
+        speed: 0,
+        gear: 'P',
+        safety_level: 5,
+        distraction_level: 0,
+        battery_percentage: 70,
+        fatigue_level: 0,
+      },
+      'highway-fatigue': {
         distraction_level: 4,
-        speed: 80,
+        fatigue_level: 4,
+        speed: 120,
         safety_level: 2,
         gear: 'D',
         battery_percentage: 50,
@@ -290,18 +308,41 @@ function App() {
         weather: language === 'zh' ? '晴天' : 'Sunny',
         cabin_temp: 24,
       },
-      'bad-weather': {
-        weather: language === 'zh' ? '大雨' : 'Heavy Rain',
-        speed: 45,
-        safety_level: 1,
+      'parking-entertainment': {
+        location: language === 'zh' ? '商业区停车场' : 'Parking Lot',
+        speed: 0,
+        gear: 'P',
+        distraction_level: 0,
+        safety_level: 5,
+        battery_percentage: 60,
+        cabin_temp: 24,
+        weather: language === 'zh' ? '晴天' : 'Sunny',
+        fatigue_level: 0,
+      },
+      'low-battery-urgent': {
+        battery_percentage: 8,
+        location: language === 'zh' ? '市区道路' : 'City Road',
+        speed: 30,
+        safety_level: 2,
         gear: 'D',
+        distraction_level: 2,
+        weather: language === 'zh' ? '晴天' : 'Sunny',
+        cabin_temp: 24,
+        fatigue_level: 0,
+      },
+      'incoming-call-driving': {
+        speed: 60,
+        gear: 'D',
+        safety_level: 3,
         distraction_level: 0,
         battery_percentage: 65,
-        location: language === 'zh' ? '市区道路' : 'City Road',
-        cabin_temp: 22,
+        location: language === 'zh' ? '城市快速路' : 'Expressway',
+        weather: language === 'zh' ? '晴天' : 'Sunny',
+        cabin_temp: 24,
+        fatigue_level: 0,
       },
-      'emergency': {
-        speed: 30,
+      'emergency-brake': {
+        speed: 35,
         safety_level: 1,
         distraction_level: 0,
         gear: 'D',
@@ -309,6 +350,8 @@ function App() {
         location: language === 'zh' ? '紧急制动路段' : 'Emergency Brake Zone',
         weather: language === 'zh' ? '晴天' : 'Sunny',
         cabin_temp: 24,
+        aeb_triggered: true,
+        fatigue_level: 0,
       },
     };
 
@@ -348,6 +391,24 @@ function App() {
     setTimeout(() => {
       setIsScenarioActive(false);
     }, 30000);
+
+    const scenarioPrompts: Record<string, string> = {
+      'morning-commute': language === 'zh' ? '分析当前通勤路况' : 'Analyze commute traffic',
+      'winter-cold-start': language === 'zh' ? '好冷' : 'Too cold',
+      'summer-hot-cabin': language === 'zh' ? '好热' : 'Too hot',
+      'highway-fatigue': language === 'zh' ? '播放音乐' : 'Play music',
+      'parking-entertainment': language === 'zh' ? '播放音乐' : 'Play music',
+      'low-battery-urgent': language === 'zh' ? '找充电站' : 'Find charger',
+      'incoming-call-driving': language === 'zh' ? '接听电话' : 'Answer call',
+      'emergency-brake': language === 'zh' ? '发生了什么' : 'What happened',
+    };
+
+    const prompt = scenarioPrompts[scenarioType];
+    if (prompt) {
+      setTimeout(() => {
+        handleSendCommand(prompt);
+      }, 1000);
+    }
   };
 
   useEffect(() => {
@@ -414,6 +475,14 @@ function App() {
           </div>
         </div>
       </div>
+
+      <DecisionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        decision={modalDecision}
+        language={language}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 }
