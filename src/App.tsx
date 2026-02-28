@@ -169,6 +169,12 @@ function App() {
           distraction_level: vehicleState.distraction_level,
           safety_level: vehicleState.safety_level,
           speed: vehicleState.speed,
+          battery_percentage: vehicleState.battery_percentage,
+          cabin_temp: vehicleState.cabin_temp,
+          weather: vehicleState.weather,
+          scenario_type: vehicleState.scenario_type,
+          aeb_triggered: vehicleState.aeb_triggered,
+          fatigue_level: vehicleState.fatigue_level,
           vehicle_state_id: vehicleState.id,
         }),
       });

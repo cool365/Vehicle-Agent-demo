@@ -5,6 +5,17 @@ export interface VehicleState {
   safety_level: number;
   distraction_level: number;
   ar_opacity: number;
+  battery_percentage: number;
+  cabin_temp: number;
+  location: string;
+  weather: string;
+  driving_duration_minutes?: number;
+  fatigue_level?: number;
+  front_distance_m?: number;
+  rear_distance_m?: number;
+  lane_keeping?: string;
+  aeb_triggered?: boolean;
+  scenario_type?: string;
   created_at: string;
 }
 
