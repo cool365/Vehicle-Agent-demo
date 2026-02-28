@@ -111,7 +111,26 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const vehicleState = await generateVehicleState(supabase);
+    const body = await req.json().catch(() => ({}));
+    const scenarioState = body.scenarioState;
+
+    let vehicleState: any;
+
+    if (scenarioState) {
+      vehicleState = {
+        speed: scenarioState.speed,
+        gear: scenarioState.gear,
+        safety_level: scenarioState.safety_level,
+        distraction_level: scenarioState.distraction_level,
+        ar_opacity: calculateAROpacity(scenarioState.safety_level, scenarioState.distraction_level),
+        battery_percentage: scenarioState.battery_percentage,
+        cabin_temp: scenarioState.cabin_temp,
+        location: scenarioState.location,
+        weather: scenarioState.weather,
+      };
+    } else {
+      vehicleState = await generateVehicleState(supabase);
+    }
 
     const { data, error } = await supabase
       .from('vehicle_states')

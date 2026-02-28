@@ -42,15 +42,21 @@ function App() {
     setLanguage(prev => prev === 'zh' ? 'en' : 'zh');
   };
 
+  const [isScenarioActive, setIsScenarioActive] = useState(false);
+
   useEffect(() => {
     if (!supabaseUrl) {
       console.error('VITE_SUPABASE_URL is not defined');
       return;
     }
     fetchVehicleState();
-    const interval = setInterval(fetchVehicleState, 8000);
+    const interval = setInterval(() => {
+      if (!isScenarioActive) {
+        fetchVehicleState();
+      }
+    }, 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isScenarioActive]);
 
   const fetchVehicleState = async () => {
     if (!supabaseUrl) return;
@@ -235,8 +241,8 @@ function App() {
     }
   };
 
-  const handleTriggerScenario = (scenarioType: string) => {
-    if (!vehicleState) return;
+  const handleTriggerScenario = async (scenarioType: string) => {
+    if (!vehicleState || !supabaseUrl) return;
 
     const scenarioStates: Record<string, Partial<VehicleState>> = {
       'low-battery': {
@@ -303,10 +309,39 @@ function App() {
     const scenarioData = scenarioStates[scenarioType];
     if (!scenarioData) return;
 
-    setVehicleState({
+    const newState = {
       ...vehicleState,
       ...scenarioData,
-    });
+    };
+
+    setIsScenarioActive(true);
+
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/vehicle-state-simulator`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scenarioState: newState,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setVehicleState(data);
+      } else {
+        console.error('Failed to sync scenario state:', response.status);
+        setVehicleState(newState);
+      }
+    } catch (error) {
+      console.error('Failed to sync scenario state:', error);
+      setVehicleState(newState);
+    }
+
+    setTimeout(() => {
+      setIsScenarioActive(false);
+    }, 30000);
   };
 
   useEffect(() => {
